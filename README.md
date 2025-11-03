@@ -3,9 +3,6 @@
 
 ---
 
-## 🧾 **File 2: `README.md`**
-
-```markdown
 # 📱 SwiftUI Capstone – Quote Generator App
 
 ### 🌟 “Getting Started with SwiftUI for iOS – A Beginner’s Guide to Building a Simple Quotes App”
@@ -14,18 +11,19 @@
 
 ## 🧭 Overview
 
-This project is part of the **AI Capstone Project** — a learning exercise on how to use **Generative AI** to explore and build with a new technology.
+This project is part of the **AI Capstone Project** — a guided learning journey using **Generative AI** to explore new technologies.
 
-The project demonstrates:
+The app demonstrates:
 - How to set up a **SwiftUI iOS app** from scratch.
 - How to fetch and display **random motivational quotes** from a free public API.
-- How to use **AI prompts** effectively for learning and debugging.
+- How to implement **auto-refreshing quotes** using a timer.
+- How to use **AI prompts** effectively for learning, debugging, and iteration.
 
 ---
 
 ## 🎯 Project Objective
 
-> Build and present a simple SwiftUI-based iOS app that displays random motivational quotes using the [DummyJSON Quotes API](https://dummyjson.com/quotes).
+> Build and present a simple SwiftUI-based iOS app that displays random motivational quotes using the [DummyJSON Quotes API](https://dummyjson.com/quotes), with automatic quote refresh every 10 seconds.
 
 ---
 
@@ -37,83 +35,117 @@ The project demonstrates:
 | **IDE** | Xcode 15 or later |
 | **Language** | Swift 5.9+ |
 | **Framework** | SwiftUI |
-| **Device Target** | iPhone Simulator or physical device |
+| **Device Target** | iPhone Simulator or physical iOS device |
 | **Internet** | Required for fetching API data |
 
 ---
 
 ## 🧰 Setup Instructions
 
-1. **Install Xcode**
-   - Download from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
-   - Verify installation with:
-     ```bash
-     xcode-select --install
-     ```
+### Step 1 – Install Xcode
 
-2. **Create Project**
-   - Open **Xcode** → **File** → **New Project** → **iOS → App**
-   - Name it: `QuoteGen`
-   - Interface: **SwiftUI**, Language: **Swift**
+Download Xcode from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
 
-3. **Add the App Code**
-   Replace your `ContentView.swift` with the following:
+Verify installation by running:
 
-   ```swift
-   import SwiftUI
+```bash
+xcode-select --install
+## Step 2 – Create a New SwiftUI Project
+Open Xcode → File → New → Project → iOS → App
 
-   struct Quote: Codable, Identifiable {
-       let id: Int
-       let quote: String
-       let author: String
-   }
+Name it: QuoteGen
 
-   struct QuoteResponse: Codable {
-       let quotes: [Quote]
-   }
+Interface: SwiftUI
 
-   struct ContentView: View {
-       @State private var quote: Quote?
+Language: Swift
 
-       var body: some View {
-           VStack {
-               if let quote = quote {
-                   Text("“\(quote.quote)”")
-                       .font(.headline)
-                       .padding()
-                   Text("- \(quote.author)")
-                       .font(.subheadline)
-                       .foregroundColor(.gray)
-               } else {
-                   ProgressView("Fetching Quote...")
-               }
-           }
-           .padding()
-           .task {
-               await fetchQuote()
-           }
-       }
+Save and open the project.
 
-       func fetchQuote() async {
-           guard let url = URL(string: "https://dummyjson.com/quotes") else { return }
-           do {
-               let (data, _) = try await URLSession.shared.data(from: url)
-               let response = try JSONDecoder().decode(QuoteResponse.self, from: data)
-               quote = response.quotes.randomElement()
-           } catch {
-               print("Error fetching quote: \(error)")
-           }
-       }
-   }
+Run it once to verify it displays “Hello, world!” in the simulator.
 
+## Step 3 – Replace Code with the App Logic
+Replace everything in your ContentView.swift file with the following:
 
-Run the App
+swift
+Copy code
+import SwiftUI
 
-Press ⌘ + R or click the Run button in Xcode.
+struct Quote: Codable, Identifiable {
+    let id: Int
+    let quote: String
+    let author: String
+}
 
-The app should display a random quote once loaded.
+struct QuoteResponse: Codable {
+    let quotes: [Quote]
+}
+
+struct ContentView: View {
+    @State private var quote: Quote?
+    @State private var timer: Timer?
+
+    var body: some View {
+        VStack(spacing: 20) {
+            if let quote = quote {
+                Text("“\(quote.quote)”")
+                    .font(.title2)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                Text("- \(quote.author)")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .padding(.bottom)
+            } else {
+                ProgressView("Fetching Quote...")
+            }
+
+            Text("Quotes refresh every 10 seconds ⏱️")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+        .task {
+            await fetchQuote()
+            startAutoRefresh()
+        }
+        .onDisappear {
+            timer?.invalidate()
+        }
+    }
+
+    func fetchQuote() async {
+        guard let url = URL(string: "https://dummyjson.com/quotes") else { return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let response = try JSONDecoder().decode(QuoteResponse.self, from: data)
+            withAnimation {
+                quote = response.quotes.randomElement()
+            }
+        } catch {
+            print("Error fetching quote: \(error)")
+        }
+    }
+
+    func startAutoRefresh() {
+        timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+            Task {
+                await fetchQuote()
+            }
+        }
+    }
+}
+
+## Step 4 – Run the App
+Press ⌘ + R or click Run in Xcode.
+Once the app launches, it will:
+
+Fetch a random motivational quote.
+
+Automatically refresh with a new quote every 10 seconds.
 
 🧩 Project Structure
+css
+Copy code
 swiftui-capstone-quote-app/
 │
 ├── QuoteGen.xcodeproj
@@ -123,43 +155,42 @@ swiftui-capstone-quote-app/
 │   └── Assets.xcassets/
 ├── README.md
 └── capstone-swiftui-guide.md
-
 🧠 Learning with AI Prompts
+During the build, AI assistance was used to:
 
-During the project, AI was used to:
+Learn SwiftUI’s state-driven design system.
 
-Learn SwiftUI’s layout and reactive state system.
+Fix async/await and networking errors.
 
-Troubleshoot common build errors.
+Implement auto-refresh using timers.
 
-Simplify the process of decoding JSON using Codable.
+Refine UI layout and text styling.
 
-Explore async/await for Swift concurrency.
-
-Example Prompts:
+Example Prompts
 Prompt    Purpose
 “Give me a step-by-step guide to build a SwiftUI Hello World app.”    Understand SwiftUI basics
-“How to fetch JSON data from an API using async/await in SwiftUI?”    Learn networking and data handling
-“Explain why my SwiftUI view isn’t updating after data load.”    Fix state management issues
-“How do I parse nested JSON in Swift Codable?”    Handle API responses like DummyJSON
+“How to fetch JSON data from an API using async/await in SwiftUI?”    Learn networking in Swift
+“How do I use Timer in SwiftUI to auto-refresh data?”    Implement timed updates
+“Why isn’t my SwiftUI view updating after fetching data?”    Debug state refresh issues
+
 ⚠️ Common Issues & Fixes
 Issue    Cause    Fix
-No such module 'SwiftUI'    Selected UIKit template    Recreate project with Interface = SwiftUI
-API not loading    URL missing https://    Added full API endpoint
-UI doesn’t refresh    @State missing    Added @State property wrapper
-Decoding failed    Wrong model fields    Matched JSON structure to quotes array
+❌ No such module 'SwiftUI'    Chose UIKit template    Recreate project with SwiftUI interface
+❌ API not loading    Missing https:// in URL    Use https://dummyjson.com/quotes
+❌ UI not updating    Missing @State wrapper    Use @State to trigger re-renders
+❌ JSON decoding failed    Model mismatch    Match API keys: quote, author, id
+❌ Timer not working    Timer not retained    Store Timer in @State variable
+
 📸 Screenshot Example
+Add a screenshot of your running app here:
 
-You can add a screenshot here after running the app:
-
+markdown
+Copy code
 ![App Screenshot](docs/screenshot.png)
-
-
-(Place your image under a /docs/ folder or drag it into your repo.)
+(Place your image in a /docs/ folder inside your repo.)
 
 📚 References
-
-Apple Developer – SwiftUI Docs
+Apple Developer – SwiftUI Documentation
 
 Hacking with Swift – SwiftUI Quick Start
 
@@ -170,12 +201,9 @@ Swift.org
 Stack Overflow – SwiftUI Networking Tips
 
 🧾 License
-
-This project is open source and available under the MIT License
-.
+This project is open-source and available under the MIT License.
 
 👤 Author
-
 Name: Edwin Weru
 Institution: Moringa School
 Capstone: AI Learning Toolkit – SwiftUI
